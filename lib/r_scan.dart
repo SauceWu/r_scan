@@ -107,7 +107,7 @@ class RScanResult {
 
   factory RScanResult.formMap(Map? map) {
     return map == null
-        ? null
+        ? RScanResult()
         : RScanResult(
             type: map['type'] != null
                 ? RScanBarType.values[map['type'] as int]
