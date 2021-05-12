@@ -12,9 +12,9 @@ final MethodChannel _channel = const MethodChannel('$_scanType/method');
 
 Future<List<RScanCameraDescription>> availableRScanCameras() async {
   try {
-    final List<Map<dynamic, dynamic>> cameras = await (_channel
-        .invokeListMethod<Map<dynamic, dynamic>>('availableCameras') as FutureOr<List<Map<dynamic, dynamic>>>);
-    return cameras.map((Map<dynamic, dynamic> camera) {
+    final List<Map<dynamic, dynamic>>? cameras = await (_channel
+        .invokeListMethod<Map<dynamic, dynamic>>('availableCameras') as FutureOr<List<Map<dynamic, dynamic>>?>);
+    return cameras!.map((Map<dynamic, dynamic> camera) {
       return RScanCameraDescription(
         name: camera['name'],
         lensDirection: _parseCameraLensDirection(camera['lensFacing']),
@@ -43,12 +43,12 @@ class RScanCameraController extends ValueNotifier<RScanCameraValue> {
     _creatingCompleter = Completer<void>();
 
     try {
-      final Map<String, dynamic> reply =
-          await (_channel.invokeMapMethod('initialize', <String, dynamic>{
+      final Map<dynamic, dynamic>? reply =
+      await (_channel.invokeMapMethod('initialize', <String, dynamic>{
         'cameraName': description.name,
         'resolutionPreset': _serializeResolutionPreset(resolutionPreset),
-      }) as FutureOr<Map<String, dynamic>>);
-      _textureId = reply['textureId'];
+      }) as Future<Map<dynamic, dynamic>?>);
+      _textureId = reply!['textureId'];
       value = value.copyWith(
           isInitialized: true,
           previewSize: Size(reply['previewWidth'].toDouble(),
@@ -57,26 +57,26 @@ class RScanCameraController extends ValueNotifier<RScanCameraValue> {
           .receiveBroadcastStream()
           .listen(_handleResult);
     } on PlatformException catch (e) {
-      //当发生权限问题的异常时会抛出
+//当发生权限问题的异常时会抛出
       throw RScanCameraException(e.code, e.message);
     }
     _creatingCompleter!.complete();
     return _creatingCompleter!.future;
   }
 
-  //处理返回值
+//处理返回值
   void _handleResult(event) {
     if (_isDisposed) return;
     this.result = RScanResult.formMap(event);
     notifyListeners();
   }
 
-  //开始扫描
+//开始扫描
   Future<void> startScan() async {
     await _channel.invokeMethod('startScan');
   }
 
-  //停止扫描
+//停止扫描
   Future<void> stopScan() async {
     await _channel.invokeMethod('stopScan');
   }
@@ -130,13 +130,12 @@ class RScanCameraValue {
   final String? errorDescription;
   final Size? previewSize;
 
-  const RScanCameraValue(
-      {this.isInitialized, this.errorDescription, this.previewSize});
+  const RScanCameraValue({this.isInitialized, this.errorDescription, this.previewSize});
 
   const RScanCameraValue.uninitialized()
       : this(
-          isInitialized: false,
-        );
+    isInitialized: false,
+  );
 
   double get aspectRatio => previewSize!.height / previewSize!.width;
 
@@ -243,8 +242,7 @@ enum RScanCameraResolutionPreset {
 }
 
 /// Returns the resolution preset as a String.
-String _serializeResolutionPreset(
-    RScanCameraResolutionPreset resolutionPreset) {
+String _serializeResolutionPreset(RScanCameraResolutionPreset resolutionPreset) {
   switch (resolutionPreset) {
     case RScanCameraResolutionPreset.max:
       return 'max';
